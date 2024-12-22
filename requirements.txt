@@ -1,0 +1,5 @@
+pandas
+dash
+boto3
+awscli
+
