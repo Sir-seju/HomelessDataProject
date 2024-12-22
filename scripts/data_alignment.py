@@ -5,22 +5,19 @@ def align_and_merge_datasets(anxiety_file, demographics_file, output_file, bucke
     # Load datasets
     anxiety_data = pd.read_csv(anxiety_file)
     demographics_data = pd.read_csv(demographics_file)
-    
-    
-# Debugging: Print column names to verify
+
+    # Debugging: Print column names to verify
     print("Anxiety Data Columns:", anxiety_data.columns)
     print("Demographics Data Columns:", demographics_data.columns)
-    
 
     # Merge datasets on HID
     merged_data = pd.merge(
-    anxiety_data, 
-    demographics_data, 
-    left_on="Homeless ID",
-    right_on="HID",
-    how="inner",  # Add the missing comma here
-)
-
+        anxiety_data,
+        demographics_data,
+        left_on="Homeless ID",
+        right_on="HID",
+        how="inner"  # Specify the merge strategy
+    )
 
     # Save merged dataset
     merged_data.to_csv(output_file, index=False)
@@ -40,6 +37,5 @@ if __name__ == "__main__":
         "data/SF_HOMELESS_ANXIETY.csv",
         "data/SF_HOMELESS_DEMOGRAPHICS.csv",
         "merged_dataset.csv",
-        "your-bucket-name"
+        "my-data-project-bucket"  # Bucket name passed as a string
     )
-
