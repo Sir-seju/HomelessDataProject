@@ -51,7 +51,6 @@ project-root/
 └── README.md                 # Project documentation
 
 
-
 Setup Instructions
 Prerequisites
 Python: Version 3.9+
@@ -101,8 +100,29 @@ Backend Deployment:
 Deployed to AWS Lambda using Zappa.
 Dataset Updates:
 Automatically merges new datasets and updates S3 using a Python script.
+Example .gitlab-ci.yml File
+yaml
+Copy code
+stages:
+  - deploy
 
+deploy_backend:
+  image: python:3.9
+  stage: deploy
+  script:
+    - pip install zappa
+    - zappa deploy production
+  only:
+    - main
 
+update_dataset:
+  image: python:3.9
+  stage: deploy
+  script:
+    - pip install boto3 pandas
+    - python backend/scripts/data_alignment.py
+  only:
+    - main
 Next Steps
 Automate Dataset Updates:
 Use AWS Lambda to trigger updates when new files are uploaded to S3.
@@ -111,3 +131,4 @@ Backend: Deploy Flask API to AWS Lambda or AWS Elastic Beanstalk.
 Enhance Monitoring and Optimization:
 Set up AWS CloudWatch for monitoring.
 Optimize API performance and storage costs.
+
