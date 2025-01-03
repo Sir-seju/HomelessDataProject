@@ -1,8 +1,9 @@
 pandas
 dash
+pyarrow
 boto3
-awscli
-
-flask
-chart.js
-react-chartjs-2
+flask 
+pyathena 
+pandas 
+matplotlib 
+plotly

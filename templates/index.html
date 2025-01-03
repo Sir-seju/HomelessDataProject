@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homeless Data Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Homeless Data Dashboard</h1>
+        <form action="/search" method="get">
+            <label for="year">Year:</label>
+            <input type="text" id="year" name="year">
+
+            <label for="month">Month:</label>
+            <input type="text" id="month" name="month">
+
+            <label for="shelter">Shelter:</label>
+            <input type="text" id="shelter" name="shelter">
+
+            <button type="submit">Search</button>
+        </form>
+
+        <h2>Visualizations</h2>
+        <a href="/visualize" target="_blank">View Anxiety Trends</a>
+    </div>
+</body>
+</html>
