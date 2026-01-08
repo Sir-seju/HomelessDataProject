@@ -1,134 +1,266 @@
-# Homeless Data Project
+# Homeless Data Analytics Platform
 
-This project is a pilot solution for analyzing and visualizing data related to homelessness. It includes tools to merge and process datasets, serve processed data via a RESTful API, and automate data updates using cloud services. The project leverages Flask, AWS S3, and GitLab CI/CD for seamless deployment and management.
-
----
-
-## Table of Contents
-1. [Overview](#overview)
-2. [Technologies Used](#technologies-used)
-3. [Project Structure](#project-structure)
-4. [Setup Instructions](#setup-instructions)
-   - [Backend Setup](#backend-setup)
-5. [Usage](#usage)
-   - [Running the Backend](#running-the-backend)
-6. [GitLab CI/CD Integration](#gitlab-cicd-integration)
-7. [Next Steps](#next-steps)
-8. [Contributors](#contributors)
+A cloud-native geospatial data analytics platform for analyzing homelessness patterns, demographics, and mental health indicators across shelter facilities.
 
 ---
 
-## Overview
-This project integrates two key datasets:
-- **SF_HOMELESS_ANXIETY.csv**: Contains data on anxiety levels among homeless individuals.
-- **SF_HOMELESS_DEMOGRAPHICS.csv**: Includes demographic information.
+## Project Background
 
-The project:
-1. Processes and merges datasets using Python and uploads the result to AWS S3.
-2. Serves the processed data via a Flask API.
-3. Automates deployment and data updates using GitLab CI/CD.
+This project was developed as a **technical pilot for an interview with a GeoSpatial Data Analytics company**. The challenge was to demonstrate end-to-end data engineering and cloud architecture capabilities by building a functional analytics platform that could:
+
+- Ingest and process heterogeneous datasets (demographics + mental health indicators)
+- Store data efficiently for analytical queries at scale
+- Provide real-time visualization and exploration capabilities
+- Deploy infrastructure using modern DevOps practices
+
+The solution showcases expertise in **AWS serverless architecture**, **ETL pipeline design**, **data lake patterns**, and **full-stack development** - demonstrating the ability to translate raw data into actionable insights through well-architected cloud infrastructure.
 
 ---
 
-## Technologies Used
-- **Python**: For data processing and backend API (Flask).
-- **AWS S3**: Cloud storage for processed data.
-- **GitLab CI/CD**: Continuous integration and deployment pipeline.
+## Architecture Overview
+
+```
+                                    ┌─────────────────────────────────────────────────────────────┐
+                                    │                        AWS Cloud                             │
+                                    │                                                              │
+┌──────────────┐                    │  ┌─────────────┐    ┌─────────────┐    ┌─────────────────┐  │
+│   Raw Data   │ ───Upload───────────▶ │     S3      │───▶│   Lambda    │───▶│  S3 (Parquet)   │  │
+│   (CSV)      │                    │  │  (Landing)  │    │   (ETL)     │    │  (Data Lake)    │  │
+└──────────────┘                    │  └─────────────┘    └─────────────┘    └────────┬────────┘  │
+                                    │                                                  │          │
+                                    │                                                  ▼          │
+┌──────────────┐                    │  ┌─────────────┐    ┌─────────────┐    ┌─────────────────┐  │
+│   React      │◀────API─────────────── │  Elastic    │◀───│    Flask    │◀───│     Athena      │  │
+│   Frontend   │                    │  │  Beanstalk  │    │   Backend   │    │   (Analytics)   │  │
+└──────────────┘                    │  └─────────────┘    └─────────────┘    └─────────────────┘  │
+       │                            │                                                              │
+       │                            │  ┌──────────────────────────────────────────────────────┐   │
+       └──S3 Static Hosting─────────│  │                    Terraform IaC                      │   │
+                                    │  │    (VPC, IAM, Elastic Beanstalk, Lambda, Athena)      │   │
+                                    │  └──────────────────────────────────────────────────────┘   │
+                                    │                                                              │
+                                    └─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| **Frontend** | React, Chart.js, Axios |
+| **Backend API** | Flask, Flask-CORS, PyAthena |
+| **ETL Pipeline** | AWS Lambda, Pandas, PyArrow |
+| **Data Storage** | S3 (CSV landing, Parquet data lake) |
+| **Analytics Engine** | AWS Athena (Presto SQL) |
+| **Infrastructure** | Terraform, AWS Elastic Beanstalk |
+| **CI/CD** | GitLab CI/CD |
+| **Deployment** | S3 Static Hosting, Elastic Beanstalk |
 
 ---
 
 ## Project Structure
-```plaintext
-project-root/
+
+```
+HomelessDataProject/
+├── backend/                    # Flask REST API
+│   ├── application.py          # Main API endpoints
+│   ├── requirements.txt        # Python dependencies
+│   └── .elasticbeanstalk/      # EB deployment config
 │
-├── backend/
-│   ├── app.py                # Flask backend API
+├── frontend/                   # React SPA
+│   ├── src/
+│   │   ├── App.js              # Main application component
+│   │   └── components/         # Reusable components
+│   ├── public/                 # Static assets
+│   └── package.json            # Node dependencies
+│
+├── etl-lambda/                 # Serverless ETL
+│   ├── lambda_function.py      # Lambda handler
 │   ├── scripts/
-│   │   └── data_alignment.py # Script to merge datasets and upload to S3
-│   └── requirements.txt      # Backend dependencies
+│   │   └── process_csvs.py     # Data processing logic
+│   ├── Dockerfile              # Container deployment option
+│   └── requirements.txt
 │
-├── .gitlab-ci.yml            # GitLab CI/CD configuration
-└── README.md                 # Project documentation
+├── terraform/                  # Infrastructure as Code
+│   ├── homeless-backend/       # Backend infrastructure
+│   │   ├── main.tf
+│   │   ├── dev-vpc/            # VPC configuration
+│   │   ├── iam/                # IAM roles and policies
+│   │   └── data/dynamodb/      # DynamoDB tables
+│   └── modules/                # Reusable Terraform modules
+│       ├── vpc/
+│       ├── elasticbeanstalk-alb/
+│       └── terraform-aws-security-group/
+│
+├── data/                       # Data utilities
+│   └── automation/
+│       └── s3_upload.py        # Test data upload script
+│
+├── docs/                       # Documentation
+├── .gitlab-ci.yml              # CI/CD pipeline
+└── README.md
+```
 
+---
 
-Setup Instructions
-Prerequisites
-Python: Version 3.9+
-AWS CLI: For managing AWS resources.
-Backend Setup
-Clone the repository:
+## Features
 
-bash
-Copy code
-git clone <repository-url>
-cd project-root
-Create and activate a virtual environment:
+### Data Ingestion & Processing
+- **Automated ETL**: S3 event-triggered Lambda function processes incoming CSV files
+- **Data Normalization**: Standardizes homeless IDs, dates, and demographics across datasets
+- **Parquet Conversion**: Transforms CSV to columnar Parquet format for efficient querying
+- **Partitioning**: Data partitioned by Year/Month for optimized Athena performance
 
-bash
-Copy code
+### Analytics API
+- **Search Endpoint** (`/search`): Filter data by year, month, and shelter
+- **Visualization Endpoint** (`/visualize`): Anxiety level trends over time
+- **Shelter Analysis** (`/shelter_analysis`): Compare anxiety levels across shelters
+- **Bulk Data** (`/all`): Retrieve full dataset for exploration
+
+### Interactive Dashboard
+- **Data Search**: Filter and explore records by multiple criteria
+- **Trend Visualization**: Line charts showing anxiety levels over time
+- **Shelter Comparison**: Bar charts comparing mental health metrics across facilities
+- **Responsive Design**: Mobile-friendly interface
+
+---
+
+## Data Model
+
+The platform merges two primary datasets:
+
+**Anxiety Data**
+| Field | Type | Description |
+|-------|------|-------------|
+| Homeless_ID | STRING | Unique identifier (normalized) |
+| Encounter_Date | TIMESTAMP | Date of assessment |
+| Anxiety_Lvl | INTEGER | Anxiety level (1-10 scale) |
+
+**Demographics Data**
+| Field | Type | Description |
+|-------|------|-------------|
+| HID | STRING | Homeless identifier |
+| Registration_Date | DATE | Shelter registration date |
+| First_Name, Last_Name | STRING | Name fields |
+| Date_Of_Birth | DATE | Birth date |
+| Gender | STRING | Gender identity |
+| Race1 | STRING | Primary race/ethnicity |
+| Shelter | STRING | Current shelter facility |
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+
+- Python 3.12+
+- AWS CLI configured
+- Terraform 1.0+
+
+### Local Development
+
+**Backend**
+```bash
+cd backend
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-Install dependencies:
+source venv/bin/activate
+pip install -r requirements.txt
+python application.py
+# API available at http://localhost:5000
+```
 
-bash
-Copy code
-pip install -r backend/requirements.txt
-Add your AWS credentials:
+**Frontend**
+```bash
+cd frontend
+npm install
+npm start
+# App available at http://localhost:3000
+```
 
-Use environment variables:
-bash
-Copy code
-export AWS_ACCESS_KEY_ID=<your-access-key>
-export AWS_SECRET_ACCESS_KEY=<your-secret-key>
-export AWS_DEFAULT_REGION=<your-region>
-Run the backend API:
+### Infrastructure Deployment
 
-bash
-Copy code
-python backend/app.py
-Usage
-Running the Backend
-The Flask API serves data from AWS S3:
+```bash
+cd terraform/homeless-backend
 
-Endpoint: http://127.0.0.1:5000/data
-You can query the data through the /data endpoint, which fetches the merged dataset from S3 and returns it as JSON.
+# Initialize and deploy VPC
+cd dev-vpc && terraform init && terraform apply
 
-GitLab CI/CD Integration
-The project uses GitLab CI/CD for automation:
+# Deploy IAM roles
+cd ../iam && terraform init && terraform apply
 
-Backend Deployment:
-Deployed to AWS Lambda using Zappa.
-Dataset Updates:
-Automatically merges new datasets and updates S3 using a Python script.
-Example .gitlab-ci.yml File
-yaml
-Copy code
-stages:
-  - deploy
+# Deploy Elastic Beanstalk
+cd .. && terraform init && terraform apply
+```
 
-deploy_backend:
-  image: python:3.9
-  stage: deploy
-  script:
-    - pip install zappa
-    - zappa deploy production
-  only:
-    - main
+---
 
-update_dataset:
-  image: python:3.9
-  stage: deploy
-  script:
-    - pip install boto3 pandas
-    - python backend/scripts/data_alignment.py
-  only:
-    - main
-Next Steps
-Automate Dataset Updates:
-Use AWS Lambda to trigger updates when new files are uploaded to S3.
-Deploy the Application:
-Backend: Deploy Flask API to AWS Lambda or AWS Elastic Beanstalk.
-Enhance Monitoring and Optimization:
-Set up AWS CloudWatch for monitoring.
-Optimize API performance and storage costs.
+## API Reference
 
+### Search Data
+```http
+GET /search?year=2019&month=06&shelter=Happy%20Shelter
+```
+
+### Get Anxiety Trends
+```http
+GET /visualize
+```
+Returns average anxiety levels grouped by encounter date.
+
+### Shelter Analysis
+```http
+GET /shelter_analysis
+```
+Returns average anxiety levels grouped by shelter facility.
+
+---
+
+## CI/CD Pipeline
+
+The GitLab CI/CD pipeline automates:
+
+1. **Test Stage**: Runs backend unit tests
+2. **Build Stage**: Builds React production bundle
+3. **Deploy Stage**:
+   - Backend → AWS Elastic Beanstalk
+   - Frontend → S3 Static Hosting
+   - ETL Lambda → AWS Lambda function update
+
+Deploy jobs are manual (`when: manual`) for controlled releases.
+
+---
+
+## Key Engineering Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| **Athena over RDS** | Serverless, pay-per-query model ideal for analytical workloads |
+| **Parquet format** | Columnar storage reduces query costs by 30-90% vs CSV |
+| **Year/Month partitioning** | Enables partition pruning for time-based queries |
+| **Elastic Beanstalk** | Managed platform simplifies deployment while allowing customization |
+| **Terraform modules** | Reusable infrastructure patterns for consistency |
+
+---
+
+## Future Enhancements
+
+- [ ] Add authentication (AWS Cognito)
+- [ ] Implement geospatial visualization with Mapbox/Leaflet
+- [ ] Add predictive analytics for shelter capacity planning
+- [ ] Enable real-time data streaming with Kinesis
+- [ ] Add data quality monitoring with Great Expectations
+
+---
+
+## License
+
+MIT License - See [LICENSE](LICENSE) for details.
+
+---
+
+## Author
+
+**Uwasan Maku** - Senior DevSecOps Engineer
+
+[LinkedIn](https://www.linkedin.com/in/uwasan-maku) | [GitHub](https://github.com/Sir-seju)

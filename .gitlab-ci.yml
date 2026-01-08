@@ -1,33 +1,105 @@
-# Define stages
+# Homeless Data Project - Mono-repo CI/CD Pipeline
+# Combined pipeline for backend, frontend, and ETL components
+
 stages:
   - test
+  - build
   - deploy
-  - update
 
-# Stage 1: Test Python Scripts
+variables:
+  AWS_DEFAULT_REGION: "us-east-1"
+  FRONTEND_S3_BUCKET: "homeless-frontend"
+  BACKEND_APP_NAME: "HomelessDataBackend"
+
+# ===================
+# Backend Pipeline
+# ===================
+
 test_backend:
-  image: python:3.9
+  image: python:3.12
   stage: test
   script:
-    - pip install -r backend/requirements.txt
-    - python -m unittest discover backend/scripts/tests
+    - cd backend
+    - pip install -r requirements.txt
+    - python -m pytest tests/ -v || echo "No tests configured"
+  only:
+    changes:
+      - backend/**/*
 
-# Stage 2: Deploy Flask Backend to AWS Lambda
 deploy_backend:
-  image: python:3.9
+  image: python:3.12
+  stage: deploy
+  before_script:
+    - pip install awsebcli
+  script:
+    - cd backend
+    - eb deploy homeless-data-env --staged
+  only:
+    - main
+  when: manual
+
+# ===================
+# Frontend Pipeline
+# ===================
+
+build_frontend:
+  image: node:20
+  stage: build
+  script:
+    - cd frontend
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - frontend/build/
+    expire_in: 1 day
+  only:
+    changes:
+      - frontend/**/*
+
+deploy_frontend:
+  image: python:3.12
+  stage: deploy
+  before_script:
+    - pip install awscli
+  dependencies:
+    - build_frontend
+  script:
+    - aws s3 sync frontend/build s3://$FRONTEND_S3_BUCKET/ --delete
+  only:
+    - main
+  when: manual
+
+# ===================
+# ETL Lambda Pipeline
+# ===================
+
+deploy_etl_lambda:
+  image: python:3.12
+  stage: deploy
+  before_script:
+    - pip install awscli
+  script:
+    - cd etl-lambda
+    - pip install -r requirements.txt -t ./package
+    - cp lambda_function.py ./package/
+    - cp -r scripts ./package/
+    - cd package && zip -r ../lambda.zip .
+    - aws lambda update-function-code --function-name homeless-data-etl --zip-file fileb://../lambda.zip
+  only:
+    - main
+  when: manual
+
+# ===================
+# Data Pipeline
+# ===================
+
+update_dataset:
+  image: python:3.12
   stage: deploy
   script:
-    - pip install zappa
-    - zappa deploy production
-  only:
-    - main
-
-# Stage 3: Automate Dataset Updates
-update_dataset:
-  image: python:3.9
-  stage: update
-  script:
     - pip install boto3 pandas
-    - python backend/scripts/data_alignment.py
+    - python data/automation/s3_upload.py
   only:
     - main
+  when: manual

@@ -1,9 +1,0 @@
-pandas
-dash
-pyarrow
-boto3
-flask 
-pyathena 
-pandas 
-matplotlib 
-plotly
